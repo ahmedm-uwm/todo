@@ -3,6 +3,7 @@ var express = require('express'),
   logger = require('./logger');
 glob = require('glob');
 mongoose = require('mongoose');
+cors = require('cors');
 
 module.exports = function (app, config) {
 
@@ -34,6 +35,8 @@ module.exports = function (app, config) {
 
 
   app.use(express.static(config.root + '/public'));
+
+  app.use(cors());
 
   var models = glob.sync(config.root + '/app/models/*.js');
   models.forEach(function (model) {
