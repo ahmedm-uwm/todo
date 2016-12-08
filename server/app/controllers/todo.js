@@ -1,7 +1,7 @@
 var express = require('express'),
 	logger = require('../../config/logger'),
 	router = express.Router()
-	mongoose = require('mongoose'),
+mongoose = require('mongoose'),
 	Chirp = mongoose.model('Chirp');
 //Authentication
 passportService = require('../../config/passport')
@@ -94,6 +94,46 @@ module.exports = function (app) {
 					return next(err);
 				});
 		});
+
+	router.route('/chirps/followedChirps/:id')
+
+		//More Web Services
+		.get(requireAuth, function (req, res, next) {
+			logger.log('Get Users followed chirps ' + req.params.id, 'debug');
+			User.findOne({ _id: req.params.id }, function (err, user) {
+				if (!err) {
+					Chirp.find({
+						$or: [
+							{ chirpAuthor: user._id }, { chirpAuthor: { $in: user.follow } }
+						]
+					}).populate('chirpAuthor').sort({ dateSubmitted: -1 }).exec(function (err, chirps) {
+						if (!err) {
+							res.status(200).json(chirps);
+						} else {
+							res.status(403).json({ message: "Forbidden" });
+						}
+					});
+				}
+			});
+		});
+
+	// .get(requireAuth, function (req, res, next) {
+	// 	logger.log('Get Users followed chirps ' + req.params.id, 'verbose');
+	// 	User.findOne({ _id: req.params.id })
+	// 		.then(function (user) {
+	// 			Chirp.find({ $or: [{ chirpAuthor: user._id }, { chirpAuthor: { $in: user.follow } }] })
+	// 				.populate('screenName')
+	// 				.sort('-dateCreated')
+	// 				.exec()
+	// 				.then(function (chirps) {
+	// 					res.status(200).json(chirps);
+	// 				})
+	// 		})
+	// 		.catch(function (err) {
+	// 			return next(error);
+	// 		});
+	// });
+
 
 
 	// 	.put(function (req, res) {
