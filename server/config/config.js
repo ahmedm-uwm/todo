@@ -5,7 +5,7 @@ var path = require('path'),
 var config = {  
        development: {    
                    root: rootPath,    
-                   app: {      name: 'Chirps'    },    
+                   app: {      name: 'Todos'    },    
                    port: 5000,  
                    db: 'mongodb://127.0.0.1/chirp-dev',
                    secret: "cayennedlikedhistreats"
@@ -13,7 +13,7 @@ var config = {
         },  
          test: {
     root: rootPath,
-    app: {      name: 'Chirps'    },
+    app: {      name: 'Todos'    },
     port: 5000,
     db: 'mongodb://127.0.0.1/chirp-test',
     secret: "cayennedlikedhistreats"
@@ -21,7 +21,7 @@ var config = {
  },
         production: {    
                      root: rootPath,    
-                     app: {      name: 'Chirps'    },    
+                     app: {      name: 'Todos'    },    
                       port: 80,
                       db: 'mongodb://127.0.0.1/chirp',
                       secret: "cayennedlikedhistreats"
