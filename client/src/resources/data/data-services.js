@@ -5,7 +5,7 @@ import { HttpClient } from 'aurelia-http-client';
 export class DataServices {
     BASE_URL = "http://localhost:5000/api";
     USER_SERVICE = '/users';
-    CHIRP_SERVICE = '/chirps';
+    TODO_SERVICE = '/todos';
 
     constructor(http) {
         this.http = http;

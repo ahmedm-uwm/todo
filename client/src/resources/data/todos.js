@@ -1,9 +1,9 @@
 import { inject } from 'aurelia-framework';
 import { DataServices } from './data-services';
-import { moment } from 'moment';
+import  moment from 'moment';
 
 @inject(DataServices)
-export class Todo {
+export class Todos {
     todoArray = new Array();
 
     constructor(data) {
@@ -29,7 +29,7 @@ export class Todo {
     //     ];
     // 	}
 
-    async getUsersTodo(id) {
+    async getUsersTodos(id) {
         var url = this.data.TODO_SERVICE + '/userTodo/' + id + '?order=dueDate';
         try {
             let serverResponse = await this.data.get(url);
@@ -59,7 +59,7 @@ export class Todo {
 
     async saveTodo() {
         try {
-            let serverResponse = await this.data.post(this.selectedTodo, this.data.TODO_SERVICE);
+            let serverResponse = await this.data.put(this.selectedTodo, this.data.TODO_SERVICE);
             if (!serverResponse.error) {
                 this.todoArray[this.selectedIndex] = serverResponse;
             }
@@ -78,9 +78,10 @@ export class Todo {
 
     selectTodo(index) {
         if (!index && index != 0) {
-            this.selectedTodon = {
+            this.selectedTodo = {
                 task: "",
                 priority: "",
+                completed: false,
                 dueDate: moment(new Date()).format("YYYY-MM-DD"),
                 dateEntered: moment(new Date()).format("YYYY-MM-DD")
             }
@@ -88,6 +89,7 @@ export class Todo {
             this.selectedIndex = index;
             this.selectedTodo = {
                 _id: this.todoArray[index]._id,
+                //todoAuthor: this.todoArray[index].todoAuthor,
                 task: this.todoArray[index].task,
                 dueDate: moment(this.todoArray[index].dueDate).format("YYYY-MM-DD"),
                 dateEntered: moment(this.todoArray[index].dateEntered).format("YYYY-MM-DD"),

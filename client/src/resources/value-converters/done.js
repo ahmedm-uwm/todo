@@ -6,9 +6,10 @@ export class DoneValueConverter {
         }
 
         if (value) {
-            return '<span class="glypicon glyphicon-check"></span>';
+            return '<i class="fa fa-check"></i>';
         } else {
             return '<span class="glyphicon glyphicon-unchecked"></span>';
+            //return '<i class="fa fa-square-o"></i>';
         }
     }
 }

@@ -2,7 +2,7 @@ var express = require('express'),
 	logger = require('../../config/logger'),
 	router = express.Router()
 mongoose = require('mongoose'),
-	Chirp = mongoose.model('Chirp');
+	Todo = mongoose.model('Todo');
 //Authentication
 passportService = require('../../config/passport')
 passport = require('passport')
@@ -12,13 +12,13 @@ var requireAuth = passport.authenticate('jwt', { session: false });
 module.exports = function (app) {
 	app.use('/api', router);
 
-	router.route('/chirps')
+	router.route('/todos')
 
 		//More Web Services
 		.post(requireAuth, function (req, res, next) {
-			logger.log('Create Chirp', 'verbose');
-			var chirp = new Chirp(req.body);
-			chirp.save()
+			logger.log('Create Todo', 'verbose');
+			var todo = new Todo(req.body);
+			todo.save()
 				.then(function (result) {
 					res.status(201).json(result);
 				})
@@ -28,8 +28,8 @@ module.exports = function (app) {
 		})
 
 		.get(requireAuth, function (req, res) {
-			logger.log("Get all chirps", "verbose");
-			res.status(200).json({ msg: "Get all chirps" });
+			logger.log("Get all todos", "verbose");
+			res.status(200).json({ msg: "Get all todos" });
 		})
 
 		// .post(function(req, res){
@@ -37,34 +37,61 @@ module.exports = function (app) {
 		// 	res.status(201).json({msg: "Create a chirps"});
 		// })
 
-		.put(requireAuth, function (req, res) {
-			logger.log("Update a chirps", "verbose");
-			res.status(201).json({ msg: "Update a chirps" });
+		// .put(requireAuth, function (req, res) {
+		// console.log(req.params.id)
+		// 	Todo.put({ _id: req.params.id }, function (err, result) {
+		// 		if (err) {
+		// 			return next(err);
+		// 		} else {
+		// 			res.status(200).json({ message: 'Update a todos' });
+		// 		}
+		// 	});
+		// });
+
+		.put(function (req, res, next) {
+			logger.log('Update a Todo ' + req.params.id, 'verbose');
+			var query = Todo.findOneAndUpdate(
+				{ _id: req.body._id },
+				req.body,
+				{ _id: true })
+				.exec()
+				.then(function (result) {
+					res.status(200).json(result);
+				})
+				.catch(function (err) {
+					return next(err);
+				});
 		});
 
-	router.route('/chirps/:id')
+	router.route('/todos/:id')
 
 		.get(requireAuth, function (req, res) {
-			logger.log("Get a chirps", "verbose");
-			res.status(200).json({ msg: "Get a chirps" });
+			logger.log("Get a todos", "verbose");
+			res.status(200).json({ msg: "Get a todos" });
 		})
 
 		.delete(requireAuth, function (req, res) {
-			logger.log("Delete a chirps", "verbose");
-			res.status(200).json({ msg: "Delete a chirps" });
+			console.log(req.params.id)
+			Todo.remove({ _id: req.params.id }, function (err, result) {
+				if (err) {
+					return next(err);
+				} else {
+					res.status(200).json({ message: 'Record Deleted' });
+				}
+			});
 		});
 
-	router.route('/chirps/userChirps/:id')
+	router.route('/todos/userTodo/:id')
 
 		//More Web Services
 		.get(requireAuth, function (req, res, next) {
-			logger.log('Get User Chirps ' + req.params.id, 'verbose');
-			Chirp.find({ chirpAuthor: req.params.id })
-				.populate('chirpAuthor')
+			logger.log('Get User Todos ' + req.params.id, 'verbose');
+			Todo.find({ todoAuthor: req.params.id })
+				.populate('todoAuthor')
 				.sort("-dateCreated")
 				.exec()
-				.then(function (chirps) {
-					res.status(200).json(chirps);
+				.then(function (todos) {
+					res.status(200).json(todos);
 				})
 				.catch(function (err) {
 					return next(err);
@@ -77,38 +104,38 @@ module.exports = function (app) {
 	// 	res.status(200).json({ msg: "Get a user’s chirps" });
 	// });
 
-	router.route('/chirps/like/:id')
+	router.route('/todos/like/:id')
 
 		//More Web Services
 		.put(requireAuth, function (req, res, next) {
-			logger.log('Update Chirp ' + req.params.id, 'debug');
-			Chirp.findOne({ _id: req.params.id }).exec()
-				.then(function (chirp) {
-					chirp.likes++;
-					return chirp.save();
+			logger.log('Update Todo ' + req.params.id, 'debug');
+			Todo.findOne({ _id: req.params.id }).exec()
+				.then(function (todo) {
+					todo.likes++;
+					return todo.save();
 				})
-				.then(function (chirp) {
-					res.status(200).json(chirp);
+				.then(function (todo) {
+					res.status(200).json(todo);
 				})
 				.catch(function (err) {
 					return next(err);
 				});
 		});
 
-	router.route('/chirps/followedChirps/:id')
+	router.route('/todos/followedTodos/:id')
 
 		//More Web Services
 		.get(requireAuth, function (req, res, next) {
-			logger.log('Get Users followed chirps ' + req.params.id, 'debug');
+			logger.log('Get Users followed todos ' + req.params.id, 'debug');
 			User.findOne({ _id: req.params.id }, function (err, user) {
 				if (!err) {
-					Chirp.find({
+					Todo.find({
 						$or: [
-							{ chirpAuthor: user._id }, { chirpAuthor: { $in: user.follow } }
+							{ todoAuthor: user._id }, { todoAuthor: { $in: user.follow } }
 						]
-					}).populate('chirpAuthor').sort({ dateSubmitted: -1 }).exec(function (err, chirps) {
+					}).populate('todoAuthor').sort({ dateSubmitted: -1 }).exec(function (err, todos) {
 						if (!err) {
-							res.status(200).json(chirps);
+							res.status(200).json(todos);
 						} else {
 							res.status(403).json({ message: "Forbidden" });
 						}

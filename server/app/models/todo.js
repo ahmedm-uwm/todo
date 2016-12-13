@@ -1,12 +1,14 @@
 var Mongoose = require('mongoose');
 var Schema = Mongoose.Schema;
 
-var ChripSchema = new Schema({
-    chirp: {type: String, required: true},
-     chirpAuthor: {type: Schema.Types.ObjectId, required: true, ref: 'User'},
-     dateCreated: {type: Date, default: Date.now},
-     likes: {type: Number, default: 0},
-     reChirp: {type: Boolean, deafult: false}
+var TodoSchema = new Schema({
+    task: { type: String, required: true },
+    todoAuthor: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
+    dueDate: { type: Date, default: Date.now },
+    priority: { type: String, required: true },
+    completed: { type: Boolean, required: true },
+    likes: { type: Number, default: 0 },
+    reTodo: { type: Boolean, deafult: false }
 });
 
-module.exports = Mongoose.model('Chirp', ChripSchema);
+module.exports = Mongoose.model('Todo', TodoSchema);

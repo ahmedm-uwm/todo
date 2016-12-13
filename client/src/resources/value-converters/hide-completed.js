@@ -8,7 +8,7 @@ export class HideCompletedValueConverter {
         if(hide){
             var displayArray = new Array();
             value.forEach(function(item){
-                if(item.completed){
+                if(!item.completed){
                     displayArray.unshift(item);
                 }
             })

@@ -1,15 +1,15 @@
 import { inject } from 'aurelia-framework';
 import { Router } from 'aurelia-router';
 import { AuthService } from 'aurelia-auth';
-import { Todo } from '../resources/data/todo';
+import { Todos } from '../resources/data/todos';
 import { Users } from '../resources/data/users';
 
-@inject(Router, AuthService, Todo, Users)
+@inject(Router, AuthService, Todos, Users)
 export class Wall {
-    constructor(router, auth, todo, users) {
+    constructor(router, auth, todos, users) {
         this.router = router;
         this.auth = auth;
-        this.todo = todo;
+        this.todos = todos;
         this.users = users;
         this.message = 'Todo';
 

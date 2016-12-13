@@ -28,8 +28,8 @@ define('app',['exports', 'aurelia-framework', 'aurelia-auth'], function (exports
     App.prototype.configureRouter = function configureRouter(config, router) {
       this.router = router;
       config.addPipelineStep('authorize', _aureliaAuth.AuthorizeStep);
-      config.title = 'Chirps';
-      config.map([{ route: ['', 'home'], moduleId: './modules/home', name: 'Home' }, { route: 'wall', moduleId: './modules/wall', name: 'Wall', auth: true }]);
+      config.title = 'Todo';
+      config.map([{ route: ['', 'home'], moduleId: './modules/home', name: 'Home' }, { route: 'wall', moduleId: './modules/list/todo', name: 'Wall', auth: true }]);
     };
 
     return App;
@@ -164,7 +164,7 @@ define('modules/home',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
             this.users = users;
             this.controller = controllerFactory.createForCurrentScope();
             this.controller.addRenderer(new _bootstrapFormRenderer.BootstrapFormRenderer());
-            this.message = 'Chirps';
+            this.message = 'To Do';
             this.showLogon = true;
             this.email;
             this.password;
@@ -259,7 +259,7 @@ define('modules/home',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
         return a.screenName;
     }).required().on(Home);
 });
-define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-auth', '../resources/data/todo', '../resources/data/users'], function (exports, _aureliaFramework, _aureliaRouter, _aureliaAuth, _todo, _users) {
+define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aurelia-auth', '../resources/data/todos', '../resources/data/users'], function (exports, _aureliaFramework, _aureliaRouter, _aureliaAuth, _todos, _users) {
     'use strict';
 
     Object.defineProperty(exports, "__esModule", {
@@ -275,13 +275,13 @@ define('modules/wall',['exports', 'aurelia-framework', 'aurelia-router', 'aureli
 
     var _dec, _class;
 
-    var Wall = exports.Wall = (_dec = (0, _aureliaFramework.inject)(_aureliaRouter.Router, _aureliaAuth.AuthService, _todo.Todo, _users.Users), _dec(_class = function () {
-        function Wall(router, auth, todo, users) {
+    var Wall = exports.Wall = (_dec = (0, _aureliaFramework.inject)(_aureliaRouter.Router, _aureliaAuth.AuthService, _todos.Todos, _users.Users), _dec(_class = function () {
+        function Wall(router, auth, todos, users) {
             _classCallCheck(this, Wall);
 
             this.router = router;
             this.auth = auth;
-            this.todo = todo;
+            this.todos = todos;
             this.users = users;
             this.message = 'Todo';
 
@@ -306,6 +306,202 @@ define('resources/index',['exports'], function (exports) {
   function configure(config) {
     config.globalResources(['./value-converters/hide-completed', './value-converters/date-format', './value-converters/done']);
   }
+});
+define('modules/list/todo',["exports", "aurelia-framework", "aurelia-router", "../../resources/data/data-services", "../../resources/data/todos", "../../resources/data/users", "aurelia-auth"], function (exports, _aureliaFramework, _aureliaRouter, _dataServices, _todos, _users, _aureliaAuth) {
+    "use strict";
+
+    Object.defineProperty(exports, "__esModule", {
+        value: true
+    });
+    exports.Wall = undefined;
+
+    function _asyncToGenerator(fn) {
+        return function () {
+            var gen = fn.apply(this, arguments);
+            return new Promise(function (resolve, reject) {
+                function step(key, arg) {
+                    try {
+                        var info = gen[key](arg);
+                        var value = info.value;
+                    } catch (error) {
+                        reject(error);
+                        return;
+                    }
+
+                    if (info.done) {
+                        resolve(value);
+                    } else {
+                        return Promise.resolve(value).then(function (value) {
+                            step("next", value);
+                        }, function (err) {
+                            step("throw", err);
+                        });
+                    }
+                }
+
+                return step("next");
+            });
+        };
+    }
+
+    function _classCallCheck(instance, Constructor) {
+        if (!(instance instanceof Constructor)) {
+            throw new TypeError("Cannot call a class as a function");
+        }
+    }
+
+    var _dec, _class;
+
+    var Wall = exports.Wall = (_dec = (0, _aureliaFramework.inject)(_aureliaRouter.Router, _dataServices.DataServices, _todos.Todos, _users.Users, _aureliaAuth.AuthService), _dec(_class = function () {
+        function Wall(router, data, todos, users, auth) {
+            _classCallCheck(this, Wall);
+
+            this.router = router;
+            this.data = data;
+            this.todos = todos;
+            this.users = users;
+            this.auth = auth;
+
+            this.todoSelected = false;
+            this.hideCompleted = false;
+            this.showList = true;
+        }
+
+        Wall.prototype.activate = function () {
+            var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+                return regeneratorRuntime.wrap(function _callee$(_context) {
+                    while (1) {
+                        switch (_context.prev = _context.next) {
+                            case 0:
+                                this.user = JSON.parse(sessionStorage.getItem('user'));
+                                _context.next = 3;
+                                return this.todos.getUsersTodos(this.user._id);
+
+                            case 3:
+                            case "end":
+                                return _context.stop();
+                        }
+                    }
+                }, _callee, this);
+            }));
+
+            function activate() {
+                return _ref.apply(this, arguments);
+            }
+
+            return activate;
+        }();
+
+        Wall.prototype.refreshTodos = function refreshTodos() {
+            this.todos.getUsersTodos(this.user._id);
+        };
+
+        Wall.prototype.newTodo = function newTodo() {
+            this.todos.selectTodo();
+            this.todoSelected = true;
+            this.showList = false;
+        };
+
+        Wall.prototype.save = function () {
+            var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+                var response;
+                return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                    while (1) {
+                        switch (_context2.prev = _context2.next) {
+                            case 0:
+                                if (!this.todos.selectedTodo._id) {
+                                    _context2.next = 7;
+                                    break;
+                                }
+
+                                _context2.next = 3;
+                                return this.todos.saveTodo();
+
+                            case 3:
+                                response = _context2.sent;
+
+                                if (!response.error) {
+                                    this.todos.todoArray[this.todos.selectedIndex] = response;
+                                }
+                                _context2.next = 10;
+                                break;
+
+                            case 7:
+                                this.todos.selectedTodo.todoAuthor = this.user._id;
+                                _context2.next = 10;
+                                return this.todos.createTodo();
+
+                            case 10:
+                                this.todoSelected = false;
+                                this.showList = true;
+
+                            case 12:
+                            case "end":
+                                return _context2.stop();
+                        }
+                    }
+                }, _callee2, this);
+            }));
+
+            function save() {
+                return _ref2.apply(this, arguments);
+            }
+
+            return save;
+        }();
+
+        Wall.prototype.toggleDone = function () {
+            var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(index) {
+                return regeneratorRuntime.wrap(function _callee3$(_context3) {
+                    while (1) {
+                        switch (_context3.prev = _context3.next) {
+                            case 0:
+                                this.todos.todoArray[index].completed = !this.todos.todoArray[index].completed;
+                                this.todos.selectTodo(index);
+                                _context3.next = 4;
+                                return this.todos.saveTodo();
+
+                            case 4:
+                            case "end":
+                                return _context3.stop();
+                        }
+                    }
+                }, _callee3, this);
+            }));
+
+            function toggleDone(_x) {
+                return _ref3.apply(this, arguments);
+            }
+
+            return toggleDone;
+        }();
+
+        Wall.prototype.edit = function edit(index) {
+            this.todos.selectTodo(index);
+            this.todoSelected = true;
+            this.showList = false;
+        };
+
+        Wall.prototype.cancel = function cancel() {
+            this.todoSelected = false;
+            this.showList = true;
+        };
+
+        Wall.prototype.toggleHideCompleted = function toggleHideCompleted() {
+            this.hideCompleted = !this.hideCompleted;
+        };
+
+        Wall.prototype.deleteTodo = function deleteTodo(index) {
+            this.todos.deleteTodo(index);
+        };
+
+        Wall.prototype.logout = function logout() {
+            sessionStorage.removeItem('user');
+            this.auth.logout();
+        };
+
+        return Wall;
+    }()) || _class);
 });
 define('resources/data/chirps',['exports', 'aurelia-framework', './data-services'], function (exports, _aureliaFramework, _dataServices) {
     'use strict';
@@ -508,7 +704,7 @@ define('resources/data/data-services',['exports', 'aurelia-framework', 'aurelia-
 
             this.BASE_URL = "http://localhost:5000/api";
             this.USER_SERVICE = '/users';
-            this.CHIRP_SERVICE = '/chirps';
+            this.TODO_SERVICE = '/todos';
 
             this.http = http;
             this.http.configure(function (x) {
@@ -571,13 +767,21 @@ define('resources/data/data-services',['exports', 'aurelia-framework', 'aurelia-
         return DataServices;
     }()) || _class);
 });
-define('resources/data/todo',['exports', 'aurelia-framework', './data-services', 'moment'], function (exports, _aureliaFramework, _dataServices, _moment) {
+define('resources/data/todos',['exports', 'aurelia-framework', './data-services', 'moment'], function (exports, _aureliaFramework, _dataServices, _moment) {
     'use strict';
 
     Object.defineProperty(exports, "__esModule", {
         value: true
     });
-    exports.Todo = undefined;
+    exports.Todos = undefined;
+
+    var _moment2 = _interopRequireDefault(_moment);
+
+    function _interopRequireDefault(obj) {
+        return obj && obj.__esModule ? obj : {
+            default: obj
+        };
+    }
 
     function _asyncToGenerator(fn) {
         return function () {
@@ -616,16 +820,16 @@ define('resources/data/todo',['exports', 'aurelia-framework', './data-services',
 
     var _dec, _class;
 
-    var Todo = exports.Todo = (_dec = (0, _aureliaFramework.inject)(_dataServices.DataServices), _dec(_class = function () {
-        function Todo(data) {
-            _classCallCheck(this, Todo);
+    var Todos = exports.Todos = (_dec = (0, _aureliaFramework.inject)(_dataServices.DataServices), _dec(_class = function () {
+        function Todos(data) {
+            _classCallCheck(this, Todos);
 
             this.todoArray = new Array();
 
             this.data = data;
         }
 
-        Todo.prototype.getUsersTodo = function () {
+        Todos.prototype.getUsersTodos = function () {
             var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee(id) {
                 var url, serverResponse;
                 return regeneratorRuntime.wrap(function _callee$(_context) {
@@ -664,14 +868,14 @@ define('resources/data/todo',['exports', 'aurelia-framework', './data-services',
                 }, _callee, this, [[1, 8]]);
             }));
 
-            function getUsersTodo(_x) {
+            function getUsersTodos(_x) {
                 return _ref.apply(this, arguments);
             }
 
-            return getUsersTodo;
+            return getUsersTodos;
         }();
 
-        Todo.prototype.createTodo = function () {
+        Todos.prototype.createTodo = function () {
             var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
                 var serverResponse;
                 return regeneratorRuntime.wrap(function _callee2$(_context2) {
@@ -712,7 +916,7 @@ define('resources/data/todo',['exports', 'aurelia-framework', './data-services',
             return createTodo;
         }();
 
-        Todo.prototype.saveTodo = function () {
+        Todos.prototype.saveTodo = function () {
             var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
                 var serverResponse;
                 return regeneratorRuntime.wrap(function _callee3$(_context3) {
@@ -721,7 +925,7 @@ define('resources/data/todo',['exports', 'aurelia-framework', './data-services',
                             case 0:
                                 _context3.prev = 0;
                                 _context3.next = 3;
-                                return this.data.post(this.selectedTodo, this.data.TODO_SERVICE);
+                                return this.data.put(this.selectedTodo, this.data.TODO_SERVICE);
 
                             case 3:
                                 serverResponse = _context3.sent;
@@ -753,33 +957,35 @@ define('resources/data/todo',['exports', 'aurelia-framework', './data-services',
             return saveTodo;
         }();
 
-        Todo.prototype.deleteTodo = function deleteTodo(index) {
+        Todos.prototype.deleteTodo = function deleteTodo(index) {
             this.data.delete(this.data.TODO_SERVICE + '/' + this.todoArray[index]._id);
             this.todoArray.splice(index, 1);
         };
 
-        Todo.prototype.selectTodo = function selectTodo(index) {
+        Todos.prototype.selectTodo = function selectTodo(index) {
             if (!index && index != 0) {
-                this.selectedTodon = {
+                this.selectedTodo = {
                     task: "",
                     priority: "",
-                    dueDate: (0, _moment.moment)(new Date()).format("YYYY-MM-DD"),
-                    dateEntered: (0, _moment.moment)(new Date()).format("YYYY-MM-DD")
+                    completed: false,
+                    dueDate: (0, _moment2.default)(new Date()).format("YYYY-MM-DD"),
+                    dateEntered: (0, _moment2.default)(new Date()).format("YYYY-MM-DD")
                 };
             } else {
                 this.selectedIndex = index;
                 this.selectedTodo = {
                     _id: this.todoArray[index]._id,
+
                     task: this.todoArray[index].task,
-                    dueDate: (0, _moment.moment)(this.todoArray[index].dueDate).format("YYYY-MM-DD"),
-                    dateEntered: (0, _moment.moment)(this.todoArray[index].dateEntered).format("YYYY-MM-DD"),
+                    dueDate: (0, _moment2.default)(this.todoArray[index].dueDate).format("YYYY-MM-DD"),
+                    dateEntered: (0, _moment2.default)(this.todoArray[index].dateEntered).format("YYYY-MM-DD"),
                     priority: this.todoArray[index].priority,
                     completed: this.todoArray[index].completed
                 };
             }
         };
 
-        return Todo;
+        return Todos;
     }()) || _class);
 });
 define('resources/data/users',['exports', 'aurelia-framework', './data-services'], function (exports, _aureliaFramework, _dataServices) {
@@ -1154,7 +1360,7 @@ define('resources/value-converters/done',['exports'], function (exports) {
             }
 
             if (value) {
-                return '<span class="glypicon glyphicon-check"></span>';
+                return '<i class="fa fa-check"></i>';
             } else {
                 return '<span class="glyphicon glyphicon-unchecked"></span>';
             }
@@ -1193,6 +1399,45 @@ define('resources/value-converters/gravatar-url',['exports'], function (exports)
 
     return GravatarUrlValueConverter;
   }();
+});
+define('resources/value-converters/hide-completed',["exports"], function (exports) {
+    "use strict";
+
+    Object.defineProperty(exports, "__esModule", {
+        value: true
+    });
+
+    function _classCallCheck(instance, Constructor) {
+        if (!(instance instanceof Constructor)) {
+            throw new TypeError("Cannot call a class as a function");
+        }
+    }
+
+    var HideCompletedValueConverter = exports.HideCompletedValueConverter = function () {
+        function HideCompletedValueConverter() {
+            _classCallCheck(this, HideCompletedValueConverter);
+        }
+
+        HideCompletedValueConverter.prototype.toView = function toView(value, hide) {
+            if (value === undefined) {
+                return;
+            }
+
+            if (hide) {
+                var displayArray = new Array();
+                value.forEach(function (item) {
+                    if (!item.completed) {
+                        displayArray.unshift(item);
+                    }
+                });
+                return displayArray;
+            } else {
+                return value;
+            }
+        };
+
+        return HideCompletedValueConverter;
+    }();
 });
 define('aurelia-auth/auth-service',['exports', 'aurelia-dependency-injection', 'aurelia-fetch-client', 'aurelia-event-aggregator', './authentication', './base-config', './oAuth1', './oAuth2', './auth-utilities'], function (exports, _aureliaDependencyInjection, _aureliaFetchClient, _aureliaEventAggregator, _authentication, _baseConfig, _oAuth, _oAuth2, _authUtilities) {
   'use strict';
@@ -4682,48 +4927,12 @@ define('aurelia-validation/implementation/validation-rules',["require", "exports
     exports.ValidationRules = ValidationRules;
 });
 
-define('resources/value-converters/hide-completed',["exports"], function (exports) {
-    "use strict";
-
-    Object.defineProperty(exports, "__esModule", {
-        value: true
-    });
-
-    function _classCallCheck(instance, Constructor) {
-        if (!(instance instanceof Constructor)) {
-            throw new TypeError("Cannot call a class as a function");
-        }
-    }
-
-    var HideCompletedValueConverter = exports.HideCompletedValueConverter = function () {
-        function HideCompletedValueConverter() {
-            _classCallCheck(this, HideCompletedValueConverter);
-        }
-
-        HideCompletedValueConverter.prototype.toView = function toView(value, hide) {
-            if (value === undefined) {
-                return;
-            }
-
-            if (hide) {
-                var displayArray = new Array();
-                value.forEach(function (item) {
-                    if (item.completed) {
-                        displayArray.unshift(item);
-                    }
-                });
-                return displayArray;
-            } else {
-                return value;
-            }
-        };
-
-        return HideCompletedValueConverter;
-    }();
-});
 define('text!app.html', ['module'], function(module) { module.exports = "<template>\n    <router-view></router-view>\n</template>\n\n\n<!--<template>\n  <h1>${message}</h1>\n</template>-->\n"; });
-define('text!modules/home.html', ['module'], function(module) { module.exports = "<template>\r\n\r\n    <div class=\"container\">\r\n        <div class=\"col-lg-1 input-group marginTop marginBottom\">\r\n            <span show.bind=\"!showLogon\" click.trigger=\"showRegister()\"  class=\" glyphicon glyphicon-arrow-left leftMargin\">\r\n\t </span>\r\n        </div>\r\n    </div>\r\n\r\n    <div class='container'>\r\n        <div class=\"panel panel-default topMargin\">\r\n            <div class=\"panel-body\">\r\n                <div class=\"col-lg-2\">\r\n                    <h1>${message}</h1>\r\n                </div>\r\n                <div class=\"col-lg-3 pull-right\">\r\n                    <img src=\"http://localhost:9000/src/resources/img/chirpLogo.jpg\" />\r\n                </div>\r\n            </div>\r\n        </div>\r\n    </div>\r\n\r\n\r\n    <div style=\"margin-top:10px;\">\r\n        <compose show.bind=\"showLogon\" view=\"./components/logon.html\"></compose>\r\n        <compose show.bind=\"!showLogon\" view=\"./components/register.html\"></compose>\r\n    </div>\r\n\r\n\r\n</template>"; });
-define('text!modules/wall.html', ['module'], function(module) { module.exports = "<template>\r\n\t<div class='container'>\r\n\t\t<div class=\"panel panel-body\">\r\n\t\t\t<h3>Rubina's TodoProject</h3>\r\n\t\t</div>\r\n\t</div>\r\n\t<div class='container'>\r\n\t\t<div class=\"panel-body\">\r\n\r\n\r\n\t\t\t<table class=\"table table-striped\">\r\n\t\t\t\t<thead>\r\n\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t<th>Description</th>\r\n\t\t\t\t\t\t<th>Done</th>\r\n\t\t\t\t\t\t<th>Due Date</th>\r\n\t\t\t\t\t\t<th>Priority</th>\r\n\t\t\t\t\t\t<th></th>\r\n\t\t\t\t\t</tr>\r\n\r\n\t\t\t\t</thead>\r\n\t\t\t\t<tbody>\r\n\t\t\t\t\t<tr click.trigger=\"edit($index)\" repeat.for=\"todo of todo.todoArray | hideCompleted:hideCompleted\">\r\n\t\t\t\t\t\t<td>${todo.task}</td>\r\n\t\t\t\t\t\t<td click.trigger='toggleDone($index)'><span innerhtml='${todo.completed | done}'></span></td>\r\n\t\t\t\t\t\t<td>${todo.dueDate | dateFormat:config.DATE_FORMAT_TABLE:true}</td>\r\n\t\t\t\t\t\t<td>${todo.priority}</td>\r\n\t\t\t\t\t\t<td click.trigger=\"deleteTodo($index)\"><i class=\"fa fa-trash-o\"></i></td>\r\n\t\t\t\t\t</tr>\r\n\r\n\t\t\t\t</tbody>\r\n\t\t\t</table>\r\n\t\t\t<span click.trigger=\"toggleHideCompleted()\" innerhtml.bind=\"hideCompleted | done\" style=\"margin-right:5px;\"></span>Hide\r\n\t\t\tCompleted\r\n\t\t</div>\r\n\t</div>\r\n\r\n\r\n</template>\r\n\r\n\r\n\r\n\r\n\r\n\r\n<!--<template>\r\n\t<div class=\"container\">\r\n\t\t<div class=\"row marginBottom marginTop vertical-align\">\r\n\t\t\t<div class=\"input-group col-lg-2\">\r\n\t\t\t\t<input value.bind=\"searchScreenName\" class=\"form-control\" type=\"text\" placeholder=\"Screen name\">\r\n\t\t\t\t<span class=\"input-group-addon\" click.trigger=\"findUser()\"><span class=\"glyphicon glyphicon-search\" aria-hidden=\"true\"></span>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"col-lg-2 col-lg-offset-8 pull-right\">\r\n\t\t\t\t<span show.bind=\"notMe\" click.trigger=\"home()\" class=\"glyphicon glyphicon-home marginLeft\"></span>\r\n\t\t\t\t<span show.bind=\"notMe\" click.trigger=\"follow()\" class=\"glyphicon glyphicon-user marginLeft\"></span>\r\n\t\t\t\t<span click.trigger=\"logout()\" class=\"glyphicon glyphicon-log-out marginLeft\"></span>\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t</div>\r\n\r\n\t<div class=\"container\">\r\n\t\t<div class=\"panel panel-default\">\r\n\t\t\t<div class=\"panel-body\">\r\n\t\t\t\t<div class=\"col-md-2\">\r\n\t\t\t\t\t<img click.trigger=\"getChirps()\" src=\"\" />\r\n\t\t\t\t</div>\r\n\t\t\t\t<div class=\"col-md-2 pull-right\">\r\n\t\t\t\t\t<h2>${users.selectedUser.screenName}</h2>\r\n\t\t\t\t</div>\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t</div>\r\n\r\n\t<div class='container'>\r\n\t\t<div class=\"panel-body\">\r\n\t\t\t<table class=\"table table-striped\">\r\n\t\t\t\t<thead>\r\n\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t<th>Description</th>\r\n\t\t\t\t\t\t<th>Done</th>\r\n\t\t\t\t\t\t<th>Due Date</th>\r\n\t\t\t\t\t\t<th>Priority</th>\r\n\t\t\t\t\t\t<th></th>\r\n\t\t\t\t\t</tr>\r\n\t\t\t\t</thead>\r\n\t\t\t\t<tbody>\r\n\t\t\t\t\t<tr click.trigger=\"edit($index)\" repeat.for=\"todo of todos.todoArray | hideCompleted:hideCompleted\">\r\n\t\t\t\t\t\t<td >${todo.task}</td>\r\n\t\t\t\t\t\t<td click.trigger='toggleDone($index)'><span innerhtml.bind='todo.completed | done'></span></td>\r\n\t\t\t\t\t\t<td>${todo.dueDate | dateFormat:config.DATE_FORMAT_TABLE:true}</td>\r\n\t\t\t\t\t\t<td>${todo.priority}</td>\r\n\t\t\t\t\t\t<td click.trigger=\"deleteTodo($index)\"><i class=\"fa fa-trash-o\"></i></td>\r\n\t\t\t\t\t</tr>\r\n\t\t\t\t</tbody>\r\n\t\t\t</table>\r\n\t\t\t<span click.trigger=\"toggleHideCompleted()\" innerhtml.bind=\"hideCompleted | done\" style=\"margin-right:5px;\"></span>Hide\r\n\t\t\tcompleted\r\n\t\t</div>\r\n\t</div>\r\n</template>-->\r\n<!--<tr>\r\n\t\t\t\t\t<td>1</td>\r\n\t\t\t\t\t<td>Anna</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t</tr>\r\n\t\t\t\t<tr>\r\n\t\t\t\t\t<td>2</td>\r\n\t\t\t\t\t<td>Debbie</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t</tr>\r\n\t\t\t\t<tr>\r\n\t\t\t\t\t<td>3</td>\r\n\t\t\t\t\t<td>John</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t</tr>\r\n\t\t\t</tbody>\r\n\t\t</table>\r\n\t\t</table>\r\n\t</div>-->\r\n\r\n\r\n\r\n\r\n<!--<div class=\"container\">\r\n\t\t<div class=\"panel panel-default marginTop\" show.bind=\"users.selectedUser._id == user._id\">\r\n\t\t\t<div class==\"panel-body\">\r\n\t\t\t\t<p><textarea value.bind=\"newChirp\" id=\"chirp\" row=\"1\" cols=\"144\"></textarea></p>\r\n\t\t\t\t<p><button click.trigger=\"chirp()\" class=\"btn btn-primary\" id=\"btnChirp\">Chirp</button></p>\r\n\t\t\t\t<div innerhtml.bind=\"saveStatus\"></div>\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t</div>\r\n\r\n\t<div class=\"container\">\r\n\t\t<div class=\"panel panel-default\">\r\n\t\t\t<div class=\"panel-body\">\r\n\t\t\t\t<div show.bind=\"wallMessage.length > 0\" innerhtml.bind=\"wallMessage\"></div>\r\n\t\t\t\t<ul class=\"list-group\">\r\n\t\t\t\t\t<li class=\"list-group-item\" repeat.for=\"chirp of chirps.chirpArray\">\r\n\t\t\t\t\t\t<div class=\"media-left\" innerhtml='${chirp.chirpAuthor.email | gravatarUrl:40:6}'></div>\r\n\t\t\t\t\t\t<div class=\"media-body\">\r\n\t\t\t\t\t\t\t<div class=\"col-lg-12\">\r\n\t\t\t\t\t\t\t\t<p>${chirp.chirp} <span show.bind=\"chirp.reChirp\">[RC]</span></p>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"col-lg-12\">\r\n\t\t\t\t\t\t\t\t<span class=\"smallFont\">${chirp.dateCreated | dateFormat:DATE_FORMAT_TABLE:true}</span>\r\n\t\t\t\t\t\t\t\t<span click.trigger='like($index)' class=\"glyphicon glyphicon-thumbs-up\"></span> ${chirp.likes}\r\n\t\t\t\t\t\t\t\t<span click.trigger='reChirp(chirp)' class=\"glyphicon glyphicon-retweet\"></span>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</li>\r\n\t\t\t\t</ul>\r\n\t\t\t</div>\r\n\t\t</div>-->\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n<!--<div class=\"container\">\r\n\t\t<div class=\"panel panel-default\">\r\n\t\t\t<div class=\"panel-body\">\r\n\t\t\t\t<div show.bind=\"wallMessage.length > 0\" innerhtml.bind=\"wallMessage\"></div>\r\n\t\t\t\t<ul class=\"list-group\">\r\n\t\t\t\t\t<li class=\"list-group-item\" repeat.for=\"chirp of chirps.chirpArray\">\r\n\t\t\t\t\t\t<div class=\"media-left\" innderhtml='${chirp.chirpAuthor.email | gravatarUrl:40}'></div>\r\n\t\t\t\t\t\t<div class=\"media-body\">\r\n\t\t\t\t\t\t\t<div class=\"col-lg-12\">\r\n\t\t\t\t\t\t\t\t<p>${chirp.chirp} <span show.bind=\"chirp.reChirp\">[RC]</span></p>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"col-lg-12\">\r\n\t\t\t\t\t\t\t\t<span class=\"smallFont\">${chirp.dateCreated | dateFormat}</span>\r\n\t\t\t\t\t\t\t\t<span click.trigger='like($index)' class=\"glyphicon glyphicon-thumbs-up\"></span> ${chirp.dateCreated}\r\n\t\t\t\t\t\t\t\t<span click.trigger='reChirp(chirp)' class=\"glyphicon glyphicon-retweet\"></span>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</li>\r\n\t\t\t\t</ul>\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t</div>-->\r\n\r\n\r\n\r\n<!--<template>\r\n\t<h1>Wall</h1>\r\n\t<button click.trigger=\"logout()\">Logout</button>\r\n</template>-->"; });
+define('text!modules/home.html', ['module'], function(module) { module.exports = "<template>\r\n\r\n    <div class=\"container\">\r\n        <div class=\"col-lg-1 input-group marginTop marginBottom\">\r\n            <span show.bind=\"!showLogon\" click.trigger=\"showRegister()\"  class=\" glyphicon glyphicon-arrow-left leftMargin\">\r\n\t </span>\r\n        </div>\r\n    </div>\r\n\r\n    <div class='container'>\r\n        <div class=\"panel panel-default topMargin\">\r\n            <div class=\"panel-body\">\r\n                <div class=\"col-lg-2\">\r\n                    <h1>${message}</h1>\r\n                </div>\r\n                <div class=\"col-lg-3 pull-right\">\r\n                    <img src=\"\" />\r\n                </div>\r\n            </div>\r\n        </div>\r\n    </div>\r\n\r\n\r\n    <div style=\"margin-top:10px;\">\r\n        <compose show.bind=\"showLogon\" view=\"./components/logon.html\"></compose>\r\n        <compose show.bind=\"!showLogon\" view=\"./components/register.html\"></compose>\r\n    </div>\r\n\r\n\r\n</template>"; });
+define('text!modules/wall.html', ['module'], function(module) { module.exports = "<template>\r\n    <div class=\"container\">\r\n        <nav class=\"navbar navbar-default\">\r\n            <div class=\"navbar-header\">\r\n                <a class=\"navbar-brand\" href=\"#\">${user.firstName} ${user.lastName}'s To Do List</a>\r\n            </div>\r\n            <div class=\"collapse navbar-collapse\">\r\n                <ul class=\"nav navbar-nav\">\r\n\r\n                </ul>\r\n                <div class=\"navbar-right\">\r\n                    <ul class=\"nav navbar-nav\">\r\n                        <li><a><span click.trigger=\"newTodo()\"><i class=\"fa fa-plus\"></i></span></a></li>\r\n                        <li><a><span click.trigger=\"refreshTodos()\"><i class=\"fa fa-refresh\"></i></span></a></li>\r\n                        <li><a><span click.trigger=\"logout()\"><i class=\"fa fa-sign-out\"></i></span></a></li>\r\n                    </ul>\r\n                </div>\r\n        </nav>\r\n        <div class=\"panel-body\">\r\n            <table class=\"table table-striped\">\r\n                <thead>\r\n                    <tr>\r\n                        <th>Description</th>\r\n                        <th>Done</th>\r\n                        <th>Due Date</th>\r\n                        <th>Priority</th>\r\n                        <th></th>\r\n                    </tr>\r\n\r\n                </thead>\r\n                <tbody>\r\n                    <tr click.trigger=\"edit($index)\" repeat.for=\"todo of todo.todoArray | hideCompleted:hideCompleted\">\r\n                        <td>${todo.task}</td>\r\n                        <td click.trigger='toggleDone($index)'><span innerhtml='${todo.completed | done}'></span></td>\r\n                        <td>${todo.dueDate | dateFormat:config.DATE_FORMAT_TABLE:true}</td>\r\n                        <td>${todo.priority}</td>\r\n                        <td click.trigger=\"deleteTodo($index)\"><i class=\"fa fa-trash-o\"></i></td>\r\n                    </tr>\r\n\r\n                </tbody>\r\n            </table>\r\n            <span click.trigger=\"toggleHideCompleted()\" innerhtml.bind=\"hideCompleted | done\" style=\"margin-right:5px;\"></span>Hide\r\n            Completed\r\n        </div>\r\n        </div>\r\n</template>\r\n<!--<template>\r\n\t<div class='container'>\r\n\t\t<div class=\"panel panel-body\">\r\n\t\t\t<h3>To Do Project</h3>\r\n\t\t</div>\r\n\t</div>\r\n\t<div class='container'>\r\n\t\t<div class=\"panel-body\">\r\n\t\t\t<table class=\"table table-striped\">\r\n\t\t\t\t<thead>\r\n\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t<th>Description</th>\r\n\t\t\t\t\t\t<th>Done</th>\r\n\t\t\t\t\t\t<th>Due Date</th>\r\n\t\t\t\t\t\t<th>Priority</th>\r\n\t\t\t\t\t\t<th></th>\r\n\t\t\t\t\t</tr>\r\n\r\n\t\t\t\t</thead>\r\n\t\t\t\t<tbody>\r\n\t\t\t\t\t<tr click.trigger=\"edit($index)\" repeat.for=\"todo of todo.todoArray | hideCompleted:hideCompleted\">\r\n\t\t\t\t\t\t<td>${todo.task}</td>\r\n\t\t\t\t\t\t<td click.trigger='toggleDone($index)'><span innerhtml='${todo.completed | done}'></span></td>\r\n\t\t\t\t\t\t<td>${todo.dueDate | dateFormat:config.DATE_FORMAT_TABLE:true}</td>\r\n\t\t\t\t\t\t<td>${todo.priority}</td>\r\n\t\t\t\t\t\t<td click.trigger=\"deleteTodo($index)\"><i class=\"fa fa-trash-o\"></i></td>\r\n\t\t\t\t\t</tr>\r\n\r\n\t\t\t\t</tbody>\r\n\t\t\t</table>\r\n\t\t\t<span click.trigger=\"toggleHideCompleted()\" innerhtml.bind=\"hideCompleted | done\" style=\"margin-right:5px;\"></span>Hide\r\n\t\t\tCompleted\r\n\t\t</div>\r\n\t</div>\r\n\r\n\r\n</template>\r\n\r\n-->\r\n\r\n\r\n\r\n\r\n<!--<template>\r\n\t<div class=\"container\">\r\n\t\t<div class=\"row marginBottom marginTop vertical-align\">\r\n\t\t\t<div class=\"input-group col-lg-2\">\r\n\t\t\t\t<input value.bind=\"searchScreenName\" class=\"form-control\" type=\"text\" placeholder=\"Screen name\">\r\n\t\t\t\t<span class=\"input-group-addon\" click.trigger=\"findUser()\"><span class=\"glyphicon glyphicon-search\" aria-hidden=\"true\"></span>\r\n\t\t\t</div>\r\n\t\t\t<div class=\"col-lg-2 col-lg-offset-8 pull-right\">\r\n\t\t\t\t<span show.bind=\"notMe\" click.trigger=\"home()\" class=\"glyphicon glyphicon-home marginLeft\"></span>\r\n\t\t\t\t<span show.bind=\"notMe\" click.trigger=\"follow()\" class=\"glyphicon glyphicon-user marginLeft\"></span>\r\n\t\t\t\t<span click.trigger=\"logout()\" class=\"glyphicon glyphicon-log-out marginLeft\"></span>\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t</div>\r\n\r\n\t<div class=\"container\">\r\n\t\t<div class=\"panel panel-default\">\r\n\t\t\t<div class=\"panel-body\">\r\n\t\t\t\t<div class=\"col-md-2\">\r\n\t\t\t\t\t<img click.trigger=\"getChirps()\" src=\"\" />\r\n\t\t\t\t</div>\r\n\t\t\t\t<div class=\"col-md-2 pull-right\">\r\n\t\t\t\t\t<h2>${users.selectedUser.screenName}</h2>\r\n\t\t\t\t</div>\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t</div>\r\n\r\n\t<div class='container'>\r\n\t\t<div class=\"panel-body\">\r\n\t\t\t<table class=\"table table-striped\">\r\n\t\t\t\t<thead>\r\n\t\t\t\t\t<tr>\r\n\t\t\t\t\t\t<th>Description</th>\r\n\t\t\t\t\t\t<th>Done</th>\r\n\t\t\t\t\t\t<th>Due Date</th>\r\n\t\t\t\t\t\t<th>Priority</th>\r\n\t\t\t\t\t\t<th></th>\r\n\t\t\t\t\t</tr>\r\n\t\t\t\t</thead>\r\n\t\t\t\t<tbody>\r\n\t\t\t\t\t<tr click.trigger=\"edit($index)\" repeat.for=\"todo of todos.todoArray | hideCompleted:hideCompleted\">\r\n\t\t\t\t\t\t<td >${todo.task}</td>\r\n\t\t\t\t\t\t<td click.trigger='toggleDone($index)'><span innerhtml.bind='todo.completed | done'></span></td>\r\n\t\t\t\t\t\t<td>${todo.dueDate | dateFormat:config.DATE_FORMAT_TABLE:true}</td>\r\n\t\t\t\t\t\t<td>${todo.priority}</td>\r\n\t\t\t\t\t\t<td click.trigger=\"deleteTodo($index)\"><i class=\"fa fa-trash-o\"></i></td>\r\n\t\t\t\t\t</tr>\r\n\t\t\t\t</tbody>\r\n\t\t\t</table>\r\n\t\t\t<span click.trigger=\"toggleHideCompleted()\" innerhtml.bind=\"hideCompleted | done\" style=\"margin-right:5px;\"></span>Hide\r\n\t\t\tcompleted\r\n\t\t</div>\r\n\t</div>\r\n</template>-->\r\n<!--<tr>\r\n\t\t\t\t\t<td>1</td>\r\n\t\t\t\t\t<td>Anna</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t</tr>\r\n\t\t\t\t<tr>\r\n\t\t\t\t\t<td>2</td>\r\n\t\t\t\t\t<td>Debbie</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t</tr>\r\n\t\t\t\t<tr>\r\n\t\t\t\t\t<td>3</td>\r\n\t\t\t\t\t<td>John</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t\t<td>blah</td>\r\n\t\t\t\t</tr>\r\n\t\t\t</tbody>\r\n\t\t</table>\r\n\t\t</table>\r\n\t</div>-->\r\n\r\n\r\n\r\n\r\n<!--<div class=\"container\">\r\n\t\t<div class=\"panel panel-default marginTop\" show.bind=\"users.selectedUser._id == user._id\">\r\n\t\t\t<div class==\"panel-body\">\r\n\t\t\t\t<p><textarea value.bind=\"newChirp\" id=\"chirp\" row=\"1\" cols=\"144\"></textarea></p>\r\n\t\t\t\t<p><button click.trigger=\"chirp()\" class=\"btn btn-primary\" id=\"btnChirp\">Chirp</button></p>\r\n\t\t\t\t<div innerhtml.bind=\"saveStatus\"></div>\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t</div>\r\n\r\n\t<div class=\"container\">\r\n\t\t<div class=\"panel panel-default\">\r\n\t\t\t<div class=\"panel-body\">\r\n\t\t\t\t<div show.bind=\"wallMessage.length > 0\" innerhtml.bind=\"wallMessage\"></div>\r\n\t\t\t\t<ul class=\"list-group\">\r\n\t\t\t\t\t<li class=\"list-group-item\" repeat.for=\"chirp of chirps.chirpArray\">\r\n\t\t\t\t\t\t<div class=\"media-left\" innerhtml='${chirp.chirpAuthor.email | gravatarUrl:40:6}'></div>\r\n\t\t\t\t\t\t<div class=\"media-body\">\r\n\t\t\t\t\t\t\t<div class=\"col-lg-12\">\r\n\t\t\t\t\t\t\t\t<p>${chirp.chirp} <span show.bind=\"chirp.reChirp\">[RC]</span></p>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"col-lg-12\">\r\n\t\t\t\t\t\t\t\t<span class=\"smallFont\">${chirp.dateCreated | dateFormat:DATE_FORMAT_TABLE:true}</span>\r\n\t\t\t\t\t\t\t\t<span click.trigger='like($index)' class=\"glyphicon glyphicon-thumbs-up\"></span> ${chirp.likes}\r\n\t\t\t\t\t\t\t\t<span click.trigger='reChirp(chirp)' class=\"glyphicon glyphicon-retweet\"></span>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</li>\r\n\t\t\t\t</ul>\r\n\t\t\t</div>\r\n\t\t</div>-->\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n<!--<div class=\"container\">\r\n\t\t<div class=\"panel panel-default\">\r\n\t\t\t<div class=\"panel-body\">\r\n\t\t\t\t<div show.bind=\"wallMessage.length > 0\" innerhtml.bind=\"wallMessage\"></div>\r\n\t\t\t\t<ul class=\"list-group\">\r\n\t\t\t\t\t<li class=\"list-group-item\" repeat.for=\"chirp of chirps.chirpArray\">\r\n\t\t\t\t\t\t<div class=\"media-left\" innderhtml='${chirp.chirpAuthor.email | gravatarUrl:40}'></div>\r\n\t\t\t\t\t\t<div class=\"media-body\">\r\n\t\t\t\t\t\t\t<div class=\"col-lg-12\">\r\n\t\t\t\t\t\t\t\t<p>${chirp.chirp} <span show.bind=\"chirp.reChirp\">[RC]</span></p>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t\t<div class=\"col-lg-12\">\r\n\t\t\t\t\t\t\t\t<span class=\"smallFont\">${chirp.dateCreated | dateFormat}</span>\r\n\t\t\t\t\t\t\t\t<span click.trigger='like($index)' class=\"glyphicon glyphicon-thumbs-up\"></span> ${chirp.dateCreated}\r\n\t\t\t\t\t\t\t\t<span click.trigger='reChirp(chirp)' class=\"glyphicon glyphicon-retweet\"></span>\r\n\t\t\t\t\t\t\t</div>\r\n\t\t\t\t\t\t</div>\r\n\t\t\t\t\t</li>\r\n\t\t\t\t</ul>\r\n\t\t\t</div>\r\n\t\t</div>\r\n\t</div>-->\r\n\r\n\r\n\r\n<!--<template>\r\n\t<h1>Wall</h1>\r\n\t<button click.trigger=\"logout()\">Logout</button>\r\n</template>-->"; });
 define('text!modules/components/logon.html', ['module'], function(module) { module.exports = "<template>\r\n    <div class='container'>\r\n        <div class=\"well col-md-3\">\r\n            <form id=\"form\">\r\n                <div id=\"errorMsg\" innerhtml.bind=\"loginError\"></div>\r\n                <div class=\"form-group\">\r\n                    <label for=\"email\">Email</label>\r\n                    <input value.bind=\"email\" type=\"email\" autofocus class=\"form-control\"  id=\"email\" placeholder=\"Email\"></input>\r\n                </div>\r\n                <div class=\"form-group\">\r\n                    <label for=\"password\">Password</label>\r\n                    <input value.bind=\"password\" type=\"password\" class=\"form-control\" id=\"password\" placeholder=\"Password\"></input>\r\n                </div>\r\n\r\n                <button class=\"btn btn-default\" click.trigger='login()'>Login</button>\r\n                <a href=\"\" class=\"text-muted\" click.trigger=\"showRegister()\">Register</a>\r\n            </form>\r\n        </div>\r\n</template>"; });
 define('text!modules/components/register.html', ['module'], function(module) { module.exports = "<template>\r\n    <div class=\"container\" <form id=\"RegistrationForm\">\r\n        <div class=\"form-group\">\r\n            <label for=\"exampleInputEmail1\">Email address</label>\r\n            <input type=\"email\" class=\"form-control\" id=\"exampleInputEmail1\"  aria-describedby=\"emailHelp\" placeholder=\"Enter email\"\r\n                value.bind=\"email & validate\">\r\n        </div>\r\n        <div class=\"form-group\">\r\n            <label for=\"exampleInputFirstName\">First name</label>\r\n            <input type=\"text\" class=\"form-control\" id=\"exampleInputFirstName\" aria-describedby=\"firstNameHelp\" placeholder=\"Enter first name\"\r\n                value.bind=\"firstName & validate\">\r\n        </div>\r\n\r\n        <div class=\"form-group\">\r\n            <label for=\"exampleInputLastName\">Last name</label>\r\n            <input type=\"text\" class=\"form-control\" id=\"exampleInputLastName\" aria-describedby=\"lastNameHelp\" placeholder=\"Enter last name\"\r\n                value.bind=\"lastName & validate\">\r\n        </div>\r\n\r\n        <div class=\"form-group\">\r\n            <label for=\"exampleInputScreenName\">Screen name</label>\r\n            <input type=\"text\" class=\"form-control\" id=\"exampleInputScreenName\" aria-describedby=\"ScreenNameHelp\" placeholder=\"Enter screen name\"\r\n                value.bind=\"screenName & validate\">\r\n        </div>\r\n\r\n        <div class=\"form-group\">\r\n            <label for=\"exampleInputPassword\">Password</label>\r\n            <input type=\"password\" class=\"form-control\" id=\"exampleInputPassword\" aria-describedby=\"PasswordHelp\" placeholder=\"Enter password\"\r\n                value.bind=\"password\">\r\n        </div>\r\n\r\n        <button type=\"submit\" click.delegate=\"save()\" class=\"btn btn-primary\">Submit</button>\r\n        </form>\r\n    </div>\r\n</template>"; });
+define('text!modules/list/detail.html', ['module'], function(module) { module.exports = "<template>\r\n    <div class=\"container\">\r\n        <nav class=\"navbar navbar-default\">\r\n            <div class=\"navbar-header\">\r\n                <a class=\"navbar-brand\" href=\"#\">${user.firstName} ${user.lastName}'s To Do List</a>\r\n            </div>\r\n            <div class=\"collapse navbar-collapse\">\r\n                <ul class=\"nav navbar-nav\">\r\n                </ul>\r\n                <div class=\"navbar-right\">\r\n                    <ul class=\"nav navbar-nav\">\r\n                        <li><a href=\"\"><span click.trigger=\"save()\"><i class=\"fa fa-save\"></i></span></a></li>\r\n                        <li><a href=\"\"><span click.trigger=\"cancel()\"><i class=\"fa fa-ban\"></i></span></a></li>\r\n                    </ul>\r\n                </div>\r\n        </nav>\r\n        <div class=\"panel\">\r\n            <div class=\"input-group col-md-12\">\r\n                <label for='actionText'>Task:</label>\r\n                <input name='actionText' class=\"form-control\" type='text' placeholder='Task' value.bind='todos.selectedTodo.task' />\r\n            </div>\r\n            <div class=\"input-group col-md-12\">\r\n                <label for='dueDate'>Due Date:</label>\r\n                <input id='dueDate' name='dueDate' class=\"form-control\" type='date' value.bind='todos.selectedTodo.dueDate' />\r\n            </div>\r\n            <div class=\"input-group col-md-12\">\r\n                <label for='priority'>Priority:</label>\r\n                <select name='priority' class=\"form-control\" value.bind='todos.selectedTodo.priority' />\r\n                <option>-- Select an Option --</option>\r\n                <option value=\"High\">High</option>\r\n                <option value=\"Medium\">Medium</option>\r\n                <option value=\"Low\">Low</option>\r\n                </select>\r\n            </div>\r\n        </div>\r\n        </div>\r\n</template>"; });
+define('text!modules/list/list.html', ['module'], function(module) { module.exports = "<template>\r\n    <div class=\"container\">\r\n        <nav class=\"navbar navbar-default\">\r\n            <div class=\"navbar-header\">\r\n                <a class=\"navbar-brand\" href=\"#\">${user.firstName} ${user.lastName}'s To Do List</a>\r\n            </div>\r\n            <div class=\"collapse navbar-collapse\">\r\n                <ul class=\"nav navbar-nav\">\r\n\r\n                </ul>\r\n                <div class=\"navbar-right\">\r\n                    <ul class=\"nav navbar-nav\">\r\n                        <li><a><span click.trigger=\"newTodo()\"><i class=\"fa fa-plus\"></i></span></a></li>\r\n                        <li><a><span click.trigger=\"refreshTodos()\"><i class=\"fa fa-refresh\"></i></span></a></li>\r\n                        <li><a><span click.trigger=\"logout()\"><i class=\"fa fa-sign-out\"></i></span></a></li>\r\n                    </ul>\r\n                </div>\r\n        </nav>\r\n        <div class=\"panel-body\">\r\n            <table class=\"table table-striped\">\r\n                <thead>\r\n                    <tr>\r\n                        <th>Description</th>\r\n                        <th>Done</th>\r\n                        <th>Due Date</th>\r\n                        <th>Priority</th>\r\n                        <th></th>\r\n                    </tr>\r\n\r\n                </thead>\r\n                <tbody>\r\n                    <tr  repeat.for=\"todo of todos.todoArray | hideCompleted:hideCompleted\">\r\n                        <td click.trigger=\"edit($index)\">${todo.task}</td>\r\n                        <td click.trigger='toggleDone($index)'><span innerhtml.bind='todo.completed | done'></span></td>\r\n                        <td>${todo.dueDate | dateFormat:config.DATE_FORMAT_TABLE:true}</td>\r\n                        <td>${todo.priority}</td>\r\n                        <td click.trigger=\"deleteTodo($index)\"><i class=\"fa fa-trash-o\"></i></td>\r\n                    </tr>\r\n\r\n                </tbody>\r\n            </table>\r\n            <span click.trigger=\"toggleHideCompleted()\" innerhtml.bind=\"hideCompleted | done\" style=\"margin-right:5px;\"></span>Hide\r\n            Completed\r\n        </div>\r\n        </div>\r\n</template>"; });
+define('text!modules/list/todo.html', ['module'], function(module) { module.exports = "<template>\r\n    <div class=\"marginTop\">\r\n        <compose show.bind=\"showList\" view=\"./list.html\"></compose>\r\n        <compose show.bind=\"!showList\" view=\"./detail.html\"></compose>\r\n    </div>\r\n</template>"; });
 //# sourceMappingURL=app-bundle.js.map

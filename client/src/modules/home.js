@@ -18,7 +18,7 @@ export class Home {
         this.users = users;
         this.controller = controllerFactory.createForCurrentScope();
         this.controller.addRenderer(new BootstrapFormRenderer());
-        this.message = 'Chirps';
+        this.message = 'To Do';
         this.showLogon = true;
         this.email;
         this.password;
